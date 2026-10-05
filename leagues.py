@@ -11,6 +11,7 @@ LEAGUE_NAMES = {
     79: "Germany 2. Bundesliga",
     80: "Germany 3. Liga",
     88: "Netherlands Eredivisie",
+    103: "Norway Eliteserien",
     104: "Norway OBOS-ligaen",
     119: "Denmark Superliga",
     120: "Denmark 1. Division",
