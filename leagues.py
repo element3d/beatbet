@@ -4,13 +4,19 @@ import unicodedata
 
 LEAGUE_NAMES = {
     39: "England Premier League",
+    72: "Brazil Serie B",
     104: "Norway OBOS-ligaen",
     221: "Austria Regionalliga East",
     251: "Paraguay Division Intermedia",
     252: "Paraguay Copa de Primera Clausura",
+    266: "Chile Liga de Ascenso",
+    281: "Peru Liga 1",
     287: "Serbia Prva Liga",
+    348: "Czech 3. CFL Group A",
+    369: "Uzbekistan Super League",
     506: "Slovakia 2. liga",
     592: "Sweden Division 2 Norra Götaland",
+    685: "Czech 3. CFL Group B",
 }
 
 # Minimum average word similarity (0..1) for a fuzzy match
