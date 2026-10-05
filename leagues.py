@@ -30,6 +30,7 @@ LEAGUE_NAMES = {
     592: "Sweden Division 2 Norra Götaland",
     668: "Czech 1. Liga U19",
     685: "Czech 3. CFL Group B",
+    862: "Denmark 3. Division",
 }
 
 # Minimum average word similarity (0..1) for a fuzzy match
