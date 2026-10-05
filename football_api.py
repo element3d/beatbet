@@ -1,7 +1,10 @@
 ﻿import json
 import os
+import ssl
 import urllib.parse
 import urllib.request
+
+import truststore
 
 BASE_URL = "https://v3.football.api-sports.io"
 FINISHED_STATUS = "FT"
@@ -13,6 +16,8 @@ BET365_BOOKMAKER_ID = 8
 # Bookmakers to take fixture odds from, in order of preference
 PREFERRED_BOOKMAKER_IDS = (ONE_X_BET_BOOKMAKER_ID, MARATHONBET_BOOKMAKER_ID, BET365_BOOKMAKER_ID)
 CURRENT_SEASON = 2026
+# Verify certificates with the OS trust store: Python's own store rejects the API's certificate chain
+SSL_CONTEXT = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
 
 
@@ -38,7 +43,7 @@ def _get(endpoint, **params):
 
     url = f"{BASE_URL}/{endpoint}?{urllib.parse.urlencode(params)}"
     request = urllib.request.Request(url, headers={"x-apisports-key": api_key})
-    with urllib.request.urlopen(request) as response:
+    with urllib.request.urlopen(request, context=SSL_CONTEXT) as response:
         data = json.load(response)
 
     # API-Football returns HTTP 200 even on errors, reporting them in "errors"
