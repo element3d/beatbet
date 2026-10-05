@@ -6,6 +6,8 @@ LEAGUE_NAMES = {
     39: "England Premier League",
     72: "Brazil Serie B",
     104: "Norway OBOS-ligaen",
+    119: "Denmark Superliga",
+    120: "Denmark 1. Division",
     144: "Belgium Jupiler Pro League",
     173: "Bulgaria Vtora Liga",
     211: "Croatia Prva NL",
@@ -26,6 +28,7 @@ LEAGUE_NAMES = {
     417: "Bahrain Premier League",
     506: "Slovakia 2. liga",
     592: "Sweden Division 2 Norra Götaland",
+    668: "Czech 1. Liga U19",
     685: "Czech 3. CFL Group B",
 }
 
