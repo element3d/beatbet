@@ -11,8 +11,13 @@ LEAGUE_NAMES = {
     79: "Germany 2. Bundesliga",
     80: "Germany 3. Liga",
     88: "Netherlands Eredivisie",
+    98: "Japan J1 League",
+    100: "Japan J3 League",
     103: "Norway Eliteserien",
     104: "Norway OBOS-ligaen",
+    106: "Poland Ekstraklasa",
+    107: "Poland I Liga",
+    109: "Poland II Liga",
     119: "Denmark Superliga",
     120: "Denmark 1. Division",
     135: "Italy Serie A",
@@ -32,6 +37,7 @@ LEAGUE_NAMES = {
     287: "Serbia Prva Liga",
     305: "Qatar Stars League",
     308: "Saudi Arabia Division 1",
+    318: "Cyprus 1. Division",
     345: "Czech Chance Liga",
     346: "Czech Chance Narodni Liga",
     348: "Czech 3. CFL Group A",
@@ -46,12 +52,24 @@ LEAGUE_NAMES = {
     862: "Denmark 3. Division",
 }
 
+# API-Football season of a league, labelled by the year it starts
+DEFAULT_SEASON = 2026
+# Leagues whose current season has a different label than DEFAULT_SEASON
+LEAGUE_SEASONS = {
+    # J1 moved to autumn-spring: 2026 is the short Feb-Jun 2026 tournament, Aug 2026 - Jun 2027 is 2027
+    98: 2027,
+}
+
 # Minimum average word similarity (0..1) for a fuzzy match
 FUZZY_THRESHOLD = 0.6
 
 
 def league_name(league_id):
     return LEAGUE_NAMES.get(league_id, f"League {league_id}")
+
+
+def league_season(league_id):
+    return LEAGUE_SEASONS.get(league_id, DEFAULT_SEASON)
 
 
 def _words(text):

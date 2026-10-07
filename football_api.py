@@ -6,6 +6,8 @@ import urllib.request
 
 import truststore
 
+from leagues import league_season
+
 BASE_URL = "https://v3.football.api-sports.io"
 FINISHED_STATUS = "FT"
 NOT_STARTED_STATUS = "NS"
@@ -15,7 +17,6 @@ MARATHONBET_BOOKMAKER_ID = 2
 BET365_BOOKMAKER_ID = 8
 # Bookmakers to take fixture odds from, in order of preference
 PREFERRED_BOOKMAKER_IDS = (ONE_X_BET_BOOKMAKER_ID, MARATHONBET_BOOKMAKER_ID, BET365_BOOKMAKER_ID)
-CURRENT_SEASON = 2026
 # Verify certificates with the OS trust store: Python's own store rejects the API's certificate chain
 SSL_CONTEXT = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
@@ -102,8 +103,9 @@ def get_fixture_odds(fixture_id, bookmaker_ids=PREFERRED_BOOKMAKER_IDS):
     return None
 
 
-def get_round_fixtures(league_id, round_number, season=CURRENT_SEASON):
-    """All fixtures of a round, ordered by kick-off."""
+def get_round_fixtures(league_id, round_number, season=None):
+    """All fixtures of a round, ordered by kick-off, from the league's current season by default."""
+    season = season or league_season(league_id)
     # Round names differ between leagues, so fetch the whole season and match by number
     fixtures = _get("fixtures", league=league_id, season=season)["response"]
     round_fixtures = [
@@ -123,7 +125,7 @@ def get_round_fixtures(league_id, round_number, season=CURRENT_SEASON):
     return round_fixtures
 
 
-def get_last_round_fixtures(league_id, round_number, season=CURRENT_SEASON):
+def get_last_round_fixtures(league_id, round_number, season=None):
     """Not started fixtures sharing the round's latest kick-off time (several if they kick off together)."""
     fixtures = get_round_fixtures(league_id, round_number, season)
     if not fixtures:
@@ -135,8 +137,9 @@ def get_last_round_fixtures(league_id, round_number, season=CURRENT_SEASON):
     ]
 
 
-def get_finished_league_matches(league_id, season=CURRENT_SEASON, bookmaker_id=ONE_X_BET_BOOKMAKER_ID):
+def get_finished_league_matches(league_id, season=None, bookmaker_id=ONE_X_BET_BOOKMAKER_ID):
     """Finished matches of a league from the first round to the current one, inclusive."""
+    season = season or league_season(league_id)
     # TODO: restore after testing; only round 1 is processed to save API requests
     # current_round = get_current_round(league_id, season)
     current_round = 1
