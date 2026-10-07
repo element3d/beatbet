@@ -41,6 +41,11 @@ def print_league_stats(league_id, with_last_matches):
 
 
 def main():
+    if sys.argv[1:2] == ["run"]:
+        from tracker import run
+        run(dry_run="--dry-run" in sys.argv[2:])
+        return
+
     league_ids = list_league_ids()
     # Last matches and their odds cost API requests, so they are fetched only for a searched league
     league_searched = len(sys.argv) > 1

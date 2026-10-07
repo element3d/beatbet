@@ -112,6 +112,7 @@ def get_round_fixtures(league_id, round_number, season=CURRENT_SEASON):
             "date": item["fixture"]["date"],
             "timestamp": item["fixture"]["timestamp"],
             "status": item["fixture"]["status"]["short"],
+            "elapsed": item["fixture"]["status"]["elapsed"],
             "home": {"id": item["teams"]["home"]["id"], "name": item["teams"]["home"]["name"]},
             "away": {"id": item["teams"]["away"]["id"], "name": item["teams"]["away"]["name"]},
         }

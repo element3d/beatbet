@@ -1,0 +1,58 @@
+from round_stats import MIN_SIDE_BY_MATCHES, is_positive
+
+# A favourite at or below these odds is unlikely to switch, so its match can be posted before kick-off
+SAFE_FAVOURITE_ODDS = 2.15
+# Confidence = this weight * pattern based chance + the rest * bookmaker implied probability
+PATTERN_WEIGHT = 0.7
+# The pattern based chance is multiplied by this for each match the short side misses beyond one
+PENALTY_PER_EXTRA_MATCH = 0.5
+
+
+def favourite_is_home(odds):
+    return odds["w1"] <= odds["w2"]
+
+
+def favourite_odds(odds):
+    return min(odds["w1"], odds["w2"])
+
+
+def is_safe(odds):
+    """The favourite is clear enough to post before kick-off."""
+    return favourite_odds(odds) <= SAFE_FAVOURITE_ODDS
+
+
+def make_prediction(split, matches, odds, pattern_percentage, home, away):
+    """Prediction for a round's last match, or None if the round already fits the pattern.
+
+    split is (fav wins, fav not wins) of the round's other matches. The pick is the side
+    the round is short of: "fav wins" when fav wins are short, otherwise "fav does not win".
+    """
+    if is_positive(split, matches):
+        return None
+    wins, not_wins = split
+    min_side = MIN_SIDE_BY_MATCHES[matches]
+    pick_fav_wins = wins < not_wins
+    missing = min_side - min(wins, not_wins)
+
+    # Bookmaker implied probabilities without the margin
+    inverse = {key: 1 / odds[key] for key in ("w1", "x", "w2")}
+    total = sum(inverse.values())
+    home_fav = favourite_is_home(odds)
+    fav_key, dog_key = ("w1", "w2") if home_fav else ("w2", "w1")
+    fav_probability = inverse[fav_key] / total
+
+    if pick_fav_wins:
+        implied = fav_probability
+        pick_odds = odds[fav_key]
+        code = "W1" if home_fav else "W2"
+        label = f"{home if home_fav else away} wins"
+    else:
+        implied = 1 - fav_probability
+        # Fair double chance odds of draw or underdog win
+        pick_odds = 1 / (inverse["x"] + inverse[dog_key])
+        code = "X2" if home_fav else "1X"
+        label = f"{away if home_fav else home} doesn't lose"
+
+    pattern_chance = pattern_percentage * PENALTY_PER_EXTRA_MATCH ** (missing - 1)
+    confidence = PATTERN_WEIGHT * pattern_chance + (1 - PATTERN_WEIGHT) * implied * 100
+    return {"code": code, "label": label, "odds": pick_odds, "confidence": confidence}
