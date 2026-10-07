@@ -37,6 +37,7 @@ LEAGUE_NAMES = {
     348: "Czech 3. CFL Group A",
     369: "Uzbekistan Super League",
     417: "Bahrain Premier League",
+    436: "Spain Primera RFEF Group 2",
     492: "Netherlands Tweede Divisie",
     506: "Slovakia 2. liga",
     592: "Sweden Division 2 Norra Götaland",
