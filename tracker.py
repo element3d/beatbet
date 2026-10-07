@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from football_api import NOT_STARTED_STATUS, get_fixture_odds, get_round_fixtures
 from leagues import league_name
-from predictions import favourite_odds, is_safe, make_prediction
+from predictions import PATTERN_WEIGHT, PENALTY_PER_EXTRA_MATCH, favourite_odds, is_safe, make_prediction
 from round_stats import (
     current_round, is_positive, list_league_ids, load_rounds, matches_per_round, positive_rounds_percentage,
 )
@@ -79,21 +79,71 @@ def _refresh_interval(fixture):
     return 0
 
 
-def format_post(league_id, round_number, split, fixture, prediction, pattern_percentage):
+def _odds_label(key):
+    return {"w1": "W1", "x": "X", "w2": "W2"}[key]
+
+
+def format_breakdown(prediction, odds, bookmaker):
+    """Every step of the confidence calculation, so each number of the post can be checked."""
+    p = prediction
+    probabilities = p["probabilities"]
+    total = 1 + p["margin"]
+    raw = " + ".join(f"{probabilities[key] * total * 100:.1f}%" for key in ("w1", "x", "w2"))
+    fair = " · ".join(f"{_odds_label(key)} {probabilities[key] * 100:.1f}%" for key in ("w1", "x", "w2"))
+
+    if p["pick_fav_wins"]:
+        pick_line = f"Pick {p['code']} = {p['implied'] * 100:.1f}%"
+    else:
+        draw, dog = probabilities["x"], probabilities[p["dog_key"]]
+        pick_line = (
+            f"Pick {p['code']} = X {draw * 100:.1f}% + {_odds_label(p['dog_key'])} {dog * 100:.1f}% "
+            f"= {p['implied'] * 100:.1f}%\n"
+            f"   Fair {p['code']} odds = 1 / (1/{odds['x']:.2f} + 1/{odds[p['dog_key']]:.2f}) = {p['odds']:.2f}"
+        )
+
+    short_side = "fav wins" if p["pick_fav_wins"] else "fav not wins"
+    if p["missing"] == 1:
+        penalty_line = "   Missing 1 → last match can complete the pattern → ×1"
+    else:
+        penalty_line = (
+            f"   Missing {p['missing']} → ⚠️ pattern can't be completed this round → "
+            f"×{PENALTY_PER_EXTRA_MATCH}^{p['missing'] - 1} = ×{p['penalty']:g}"
+        )
+
+    weight = PATTERN_WEIGHT
+    pattern_part = weight * p["pattern_chance"]
+    bookmaker_part = (1 - weight) * p["implied"] * 100
+    return (
+        f"📐 How the confidence is calculated\n"
+        f"1) Pattern chance\n"
+        f"   League fits pattern in {p['pattern_percentage']:.1f}% of rounds (both sides ≥ {p['min_side']})\n"
+        f"   Short side: {short_side}, needs {p['missing']} more to reach {p['min_side']}\n"
+        f"{penalty_line}\n"
+        f"   = {p['pattern_percentage']:.1f}% × {p['penalty']:g} = {p['pattern_chance']:.1f}%\n"
+        f"2) Bookmaker chance ({bookmaker} {odds['w1']:.2f} / {odds['x']:.2f} / {odds['w2']:.2f})\n"
+        f"   1/odds = {raw} = {total * 100:.1f}% (margin {p['margin'] * 100:.1f}%)\n"
+        f"   Without margin (÷ {total:.3f}): {fair}\n"
+        f"   {pick_line}\n"
+        f"3) Confidence = {weight:g} × {p['pattern_chance']:.1f}% + {1 - weight:g} × {p['implied'] * 100:.1f}%\n"
+        f"   = {pattern_part:.1f} + {bookmaker_part:.1f} = {p['confidence']:.1f}%"
+    )
+
+
+def format_post(league_id, round_number, split, fixture, prediction, odds, bookmaker):
     wins, not_wins = split
     kickoff = datetime.fromtimestamp(fixture["timestamp"], timezone.utc)
     if fixture["status"] == NOT_STARTED_STATUS:
         when = f"🕒 Kick-off {kickoff:%d.%m %H:%M} UTC"
     else:
-        when = f"🔴 Live, minute {fixture['elapsed']}"
+        when = f"🔴 Live, minute {fixture['elapsed']} (odds from before kick-off)"
     return (
         f"⚽ {league_name(league_id)} · Round {round_number} (last match)\n"
         f"{fixture['home']['name']} vs {fixture['away']['name']}\n"
         f"{when}\n\n"
-        f"Round so far: {wins} fav wins · {not_wins} fav not wins\n"
-        f"League fits pattern: {pattern_percentage:.0f}%\n\n"
+        f"Round so far: {wins} fav wins · {not_wins} fav not wins\n\n"
         f"✅ Pick: {prediction['label']} ({prediction['code']}) @ {prediction['odds']:.2f}\n"
-        f"📊 Confidence: {prediction['confidence']:.0f}%"
+        f"📊 Confidence: {prediction['confidence']:.1f}%\n\n"
+        f"{format_breakdown(prediction, odds, bookmaker)}"
     )
 
 
@@ -101,7 +151,7 @@ class Tracker:
     def __init__(self, dry_run=False):
         self.dry_run = dry_run
         self.posted = set() if dry_run else _load_posted()
-        # league id -> {"round", "split", "matches", "fixture", "odds", "refreshed"}
+        # league id -> {"round", "split", "matches", "fixture", "odds", "bookmaker", "refreshed"}
         # of leagues waiting for their last match
         self.waiting = {}
         self._last_upcoming = None
@@ -123,7 +173,8 @@ class Tracker:
         state = self.waiting.get(league_id)
         if not state or state["round"] != number:
             state = self.waiting[league_id] = {
-                "round": number, "split": split, "matches": matches, "fixture": None, "odds": None, "refreshed": 0,
+                "round": number, "split": split, "matches": matches,
+                "fixture": None, "odds": None, "bookmaker": None, "refreshed": 0,
             }
         if not self._refresh(league_id, state):
             return
@@ -139,7 +190,7 @@ class Tracker:
         prediction = make_prediction(
             split, matches, odds, pattern_percentage, fixture["home"]["name"], fixture["away"]["name"]
         )
-        text = format_post(league_id, number, split, fixture, prediction, pattern_percentage)
+        text = format_post(league_id, number, split, fixture, prediction, odds, state["bookmaker"])
 
         if fixture["status"] == NOT_STARTED_STATUS:
             if not is_safe(odds):
@@ -189,7 +240,7 @@ class Tracker:
         if fixture["status"] == NOT_STARTED_STATUS or not state["odds"]:
             result = get_fixture_odds(fixture["fixture_id"])
             if result:
-                state["odds"] = result[1]
+                state["bookmaker"], state["odds"] = result
         return True
 
     def _mark_posted(self, fixture_id):

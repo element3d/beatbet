@@ -26,6 +26,7 @@ def make_prediction(split, matches, odds, pattern_percentage, home, away):
 
     split is (fav wins, fav not wins) of the round's other matches. The pick is the side
     the round is short of: "fav wins" when fav wins are short, otherwise "fav does not win".
+    Besides the pick, the result holds every number the confidence is calculated from.
     """
     if is_positive(split, matches):
         return None
@@ -34,25 +35,42 @@ def make_prediction(split, matches, odds, pattern_percentage, home, away):
     pick_fav_wins = wins < not_wins
     missing = min_side - min(wins, not_wins)
 
-    # Bookmaker implied probabilities without the margin
-    inverse = {key: 1 / odds[key] for key in ("w1", "x", "w2")}
-    total = sum(inverse.values())
+    # Bookmaker implied probabilities, then without the margin
+    raw = {key: 1 / odds[key] for key in ("w1", "x", "w2")}
+    total = sum(raw.values())
+    probabilities = {key: value / total for key, value in raw.items()}
     home_fav = favourite_is_home(odds)
     fav_key, dog_key = ("w1", "w2") if home_fav else ("w2", "w1")
-    fav_probability = inverse[fav_key] / total
 
     if pick_fav_wins:
-        implied = fav_probability
+        implied = probabilities[fav_key]
         pick_odds = odds[fav_key]
         code = "W1" if home_fav else "W2"
         label = f"{home if home_fav else away} wins"
     else:
-        implied = 1 - fav_probability
+        implied = probabilities["x"] + probabilities[dog_key]
         # Fair double chance odds of draw or underdog win
-        pick_odds = 1 / (inverse["x"] + inverse[dog_key])
+        pick_odds = 1 / (raw["x"] + raw[dog_key])
         code = "X2" if home_fav else "1X"
         label = f"{away if home_fav else home} doesn't lose"
 
-    pattern_chance = pattern_percentage * PENALTY_PER_EXTRA_MATCH ** (missing - 1)
+    penalty = PENALTY_PER_EXTRA_MATCH ** (missing - 1)
+    pattern_chance = pattern_percentage * penalty
     confidence = PATTERN_WEIGHT * pattern_chance + (1 - PATTERN_WEIGHT) * implied * 100
-    return {"code": code, "label": label, "odds": pick_odds, "confidence": confidence}
+    return {
+        "code": code,
+        "label": label,
+        "odds": pick_odds,
+        "pick_fav_wins": pick_fav_wins,
+        "min_side": min_side,
+        "missing": missing,
+        "penalty": penalty,
+        "pattern_percentage": pattern_percentage,
+        "pattern_chance": pattern_chance,
+        "margin": total - 1,
+        "probabilities": probabilities,
+        "fav_key": fav_key,
+        "dog_key": dog_key,
+        "implied": implied,
+        "confidence": confidence,
+    }

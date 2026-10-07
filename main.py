@@ -41,6 +41,9 @@ def print_league_stats(league_id, with_last_matches):
 
 
 def main():
+    # Windows consoles default to a legacy encoding that cannot print names like "Horní Ředice"
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     if sys.argv[1:2] == ["run"]:
         from tracker import run
         run(dry_run="--dry-run" in sys.argv[2:])
