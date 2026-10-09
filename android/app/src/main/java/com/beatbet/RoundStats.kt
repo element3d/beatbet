@@ -10,7 +10,7 @@ const val DATA_URL = "https://eltorneo.am/data/beatbet"
 
 // Matches per round -> minimum count on each side (favourite wins / does not win)
 // for a round to be positive. E.g. 8 matches: 3 5, 4 4 and 5 3 are positive.
-val MIN_SIDE_BY_MATCHES = mapOf(10 to 4, 9 to 3, 8 to 3, 7 to 2, 6 to 2)
+val MIN_SIDE_BY_MATCHES = mapOf(12 to 5, 10 to 4, 9 to 3, 8 to 3, 7 to 2, 6 to 2)
 
 /** (fav wins, fav not wins) of one round. */
 data class Split(val wins: Int, val notWins: Int) {

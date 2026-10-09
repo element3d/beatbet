@@ -3,8 +3,10 @@ package com.beatbet
 // Copy of LEAGUE_NAMES in leagues.py: add new leagues to both
 val LEAGUE_NAMES = mapOf(
     39 to "England Premier League",
+    40 to "England Championship",
     61 to "France Ligue 1",
     62 to "France Ligue 2",
+    71 to "Brazil Serie A",
     72 to "Brazil Serie B",
     78 to "Germany Bundesliga",
     79 to "Germany 2. Bundesliga",
