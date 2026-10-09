@@ -4,8 +4,10 @@ import unicodedata
 
 LEAGUE_NAMES = {
     39: "England Premier League",
+    40: "England Championship",
     61: "France Ligue 1",
     62: "France Ligue 2",
+    71: "Brazil Serie A",
     72: "Brazil Serie B",
     78: "Germany Bundesliga",
     79: "Germany 2. Bundesliga",
