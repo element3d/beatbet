@@ -4,7 +4,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # Matches per round -> minimum count on each side (favourite wins / does not win)
 # for a round to be positive. E.g. 8 matches: 3 5, 4 4 and 5 3 are positive.
-MIN_SIDE_BY_MATCHES = {10: 4, 9: 3, 8: 3, 7: 2, 6: 2}
+MIN_SIDE_BY_MATCHES = {12: 5, 10: 4, 9: 3, 8: 3, 7: 2, 6: 2}
 
 
 def list_league_ids():
@@ -34,10 +34,12 @@ def matches_per_round(rounds):
     return max(wins + not_wins for wins, not_wins in rounds.values())
 
 
-def is_positive(split, matches):
-    """Both sides reach the minimum, even if some matches of the round are missing."""
+def is_positive(split, matches, min_side=None):
+    """Both sides reach the minimum, even if some matches of the round are missing.
+    min_side overrides the default minimum for the league's matches per round."""
     wins, not_wins = split
-    min_side = MIN_SIDE_BY_MATCHES[matches]
+    if min_side is None:
+        min_side = MIN_SIDE_BY_MATCHES[matches]
     return wins >= min_side and not_wins >= min_side
 
 
@@ -60,7 +62,7 @@ def current_round(league_id):
     return number, rounds[number]
 
 
-def positive_rounds_count(league_id):
+def positive_rounds_count(league_id, min_side=None):
     """(number of positive rounds, total number of rounds), excluding an unfinished current round."""
     rounds = load_rounds(league_id)
     if not rounds:
@@ -71,13 +73,13 @@ def positive_rounds_count(league_id):
     unfinished = _unfinished_current_round(rounds)
     if unfinished is not None:
         del rounds[unfinished]
-    positive = sum(1 for split in rounds.values() if is_positive(split, matches))
+    positive = sum(1 for split in rounds.values() if is_positive(split, matches, min_side))
     return positive, len(rounds)
 
 
-def positive_rounds_percentage(league_id):
+def positive_rounds_percentage(league_id, min_side=None):
     """Percentage of positive rounds."""
-    positive, total = positive_rounds_count(league_id)
+    positive, total = positive_rounds_count(league_id, min_side)
     if not total:
         return 0.0
     return positive / total * 100
