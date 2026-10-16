@@ -4,7 +4,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # Matches per round -> minimum count on each side (favourite wins / does not win)
 # for a round to be positive. E.g. 8 matches: 3 5, 4 4 and 5 3 are positive.
-MIN_SIDE_BY_MATCHES = {12: 5, 10: 4, 9: 3, 8: 3, 7: 2, 6: 2}
+MIN_SIDE_BY_MATCHES = {12: 5, 11: 4, 10: 4, 9: 3, 8: 3, 7: 2, 6: 2}
 
 
 def list_league_ids():

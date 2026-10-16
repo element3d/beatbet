@@ -58,6 +58,12 @@ def _round_number(round_name):
     return int(round_name.rsplit(" - ", 1)[1])
 
 
+def _has_round_number(round_name):
+    """False for unnumbered rounds such as "Play Offs"."""
+    parts = round_name.rsplit(" - ", 1)
+    return len(parts) == 2 and parts[1].isdigit()
+
+
 def get_current_round(league_id, season):
     current = _get("fixtures/rounds", league=league_id, season=season, current="true")["response"]
     if not current:
@@ -119,7 +125,8 @@ def get_round_fixtures(league_id, round_number, season=None):
             "away": {"id": item["teams"]["away"]["id"], "name": item["teams"]["away"]["name"]},
         }
         for item in fixtures
-        if _round_number(item["league"]["round"]) == round_number
+        if _has_round_number(item["league"]["round"])
+        and _round_number(item["league"]["round"]) == round_number
     ]
     round_fixtures.sort(key=lambda f: f["timestamp"])
     return round_fixtures
@@ -148,7 +155,7 @@ def get_finished_league_matches(league_id, season=None, bookmaker_id=ONE_X_BET_B
 
     matches = []
     for item in fixtures:
-        if _round_number(item["league"]["round"]) > current_round:
+        if not _has_round_number(item["league"]["round"]) or _round_number(item["league"]["round"]) > current_round:
             continue
         fixture_id = item["fixture"]["id"]
         home, away = item["teams"]["home"], item["teams"]["away"]
