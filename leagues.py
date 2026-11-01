@@ -14,6 +14,7 @@ LEAGUE_NAMES = {
     79: "Germany 2. Bundesliga",
     80: "Germany 3. Liga",
     88: "Netherlands Eredivisie",
+    89: "Netherlands Eerste Divisie",
     94: "Portugal Primeira Liga",
     95: "Portugal Liga 2",
     98: "Japan J1 League",
@@ -23,7 +24,9 @@ LEAGUE_NAMES = {
     106: "Poland Ekstraklasa",
     107: "Poland I Liga",
     109: "Poland II Liga",
+    110: "Wales Cymru Premier",
     113: "Sweden Allsvenskan",
+    114: "Sweden Superettan",
     119: "Denmark Superliga",
     120: "Denmark 1. Division",
     122: "Denmark 2. Division",
@@ -43,12 +46,14 @@ LEAGUE_NAMES = {
     218: "Austria Bundesliga",
     219: "Austria 2. Liga",
     221: "Austria Regionalliga East",
+    233: "Egypt Premier League",
     235: "Russia Premier League",
     236: "Russia FNL",
     251: "Paraguay Division Intermedia",
     252: "Paraguay Copa de Primera Clausura",
     265: "Chile Liga de Primera",
     266: "Chile Liga de Ascenso",
+    268: "Uruguay Liga AUF",
     269: "Uruguay Segunda División",
     271: "Hungary NB I",
     272: "Hungary NB II",
@@ -67,11 +72,13 @@ LEAGUE_NAMES = {
     332: "Slovakia Niké liga",
     333: "Ukraine Premier League",
     334: "Ukraine Persha Liga",
+    340: "Vietnam V.League 1",
     342: "Armenia Premier League",
     345: "Czech Chance Liga",
     346: "Czech Chance Narodni Liga",
     348: "Czech 3. CFL Group A",
     349: "Czech 3. MSFL",
+    363: "Ethiopia Premier League",
     369: "Uzbekistan Super League",
     374: "Slovenia 2. SNL",
     382: "Israel Liga Leumit",
@@ -82,7 +89,9 @@ LEAGUE_NAMES = {
     435: "Spain Primera RFEF Group 1",
     436: "Spain Primera RFEF Group 2",
     473: "Norway 2. Division Group 1",
+    474: "Norway 2. Division Group 2",
     492: "Netherlands Tweede Divisie",
+    496: "Israel Liga Alef South",
     506: "Slovakia 2. liga",
     542: "Iraq Stars League",
     549: "Sweden Damallsvenskan",
@@ -93,6 +102,7 @@ LEAGUE_NAMES = {
     668: "Czech 1. Liga U19",
     685: "Czech 3. CFL Group B",
     736: "Sweden Elitettan",
+    774: "Norway 3. Division Group 1",
     862: "Denmark 3. Division",
 }
 
@@ -102,6 +112,12 @@ DEFAULT_SEASON = 2026
 LEAGUE_SEASONS = {
     # J1 moved to autumn-spring: 2026 is the short Feb-Jun 2026 tournament, Aug 2026 - Jun 2027 is 2027
     98: 2027,
+}
+
+# Leagues whose API-Football id holds several groups, mapped to the group we track:
+# only rounds named "<group> - N" belong to the league
+LEAGUE_ROUND_GROUPS = {
+    496: "South",
 }
 
 # Minimum average word similarity (0..1) for a fuzzy match
@@ -114,6 +130,10 @@ def league_name(league_id):
 
 def league_season(league_id):
     return LEAGUE_SEASONS.get(league_id, DEFAULT_SEASON)
+
+
+def league_round_group(league_id):
+    return LEAGUE_ROUND_GROUPS.get(league_id)
 
 
 def _words(text):

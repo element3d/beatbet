@@ -17,12 +17,27 @@ data class Split(val wins: Int, val notWins: Int) {
     val total get() = wins + notWins
 }
 
+/** Positive rounds when each side needs at least minSide, e.g. 9 matches with minSide 3: "3 6 .. 6 3". */
+data class PatternStats(
+    val matches: Int,
+    val minSide: Int,
+    val positive: Int,
+    val total: Int,
+    val percentage: Double,
+) {
+    val text get() = "$minSide ${matches - minSide} .. ${matches - minSide} $minSide"
+}
+
 data class LeagueStats(
     val positive: Int,
     val total: Int,
     val percentage: Double,
     /** (round number, split) of the latest round if it is unfinished, otherwise null. */
     val currentRound: Pair<Int, Split>?,
+    /** Every pattern from "1 n-1 .. n-1 1" up to the most balanced one. */
+    val patterns: List<PatternStats> = emptyList(),
+    /** minSide of the default pattern for the league's matches per round. */
+    val defaultMinSide: Int? = null,
 )
 
 /** Download <DATA_URL>/<leagueId>.txt. Blocking, so call it off the main thread. */
@@ -63,9 +78,9 @@ fun parseRounds(text: String): Map<Int, Split> {
 /** Largest round total, so an incomplete round does not lower it. */
 fun matchesPerRound(rounds: Map<Int, Split>): Int = rounds.values.maxOf { it.total }
 
-/** Both sides reach the minimum, even if some matches of the round are missing. */
-fun isPositive(split: Split, matches: Int): Boolean {
-    val minSide = MIN_SIDE_BY_MATCHES.getValue(matches)
+/** Both sides reach the minimum, even if some matches of the round are missing.
+ * minSide overrides the default minimum for the league's matches per round. */
+fun isPositive(split: Split, matches: Int, minSide: Int = MIN_SIDE_BY_MATCHES.getValue(matches)): Boolean {
     return split.wins >= minSide && split.notWins >= minSide
 }
 
@@ -88,7 +103,12 @@ fun leagueStats(leagueId: Int, rounds: Map<Int, Split>): LeagueStats {
     val total = finished.size
     val percentage = if (total == 0) 0.0 else positive.toDouble() / total * 100
     val current = unfinished?.let { it to rounds.getValue(it) }
-    return LeagueStats(positive, total, percentage, current)
+    val patterns = (1..matches / 2).map { minSide ->
+        val patternPositive = finished.values.count { isPositive(it, matches, minSide) }
+        val patternPercentage = if (total == 0) 0.0 else patternPositive.toDouble() / total * 100
+        PatternStats(matches, minSide, patternPositive, total, patternPercentage)
+    }
+    return LeagueStats(positive, total, percentage, current, patterns, MIN_SIDE_BY_MATCHES.getValue(matches))
 }
 
 /** Same lines as print_league_stats in main.py. */
@@ -101,5 +121,11 @@ fun formatStats(league: League, stats: LeagueStats): String = buildString {
     )
     stats.currentRound?.let { (number, split) ->
         append("\n    current round r$number: ${split.wins} ${split.notWins}")
+    }
+    if (stats.patterns.isNotEmpty()) append("\n\nAll patterns:")
+    for (pattern in stats.patterns) {
+        val patternPercentage = String.format(Locale.US, "%6.2f", pattern.percentage)
+        val default = if (pattern.minSide == stats.defaultMinSide) "  (default)" else ""
+        append("\n    ${pattern.text}: $patternPercentage%  ${pattern.positive}/${pattern.total}$default")
     }
 }

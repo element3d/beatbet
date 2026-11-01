@@ -6,7 +6,7 @@ import urllib.request
 
 import truststore
 
-from leagues import league_season
+from leagues import league_round_group, league_season
 
 BASE_URL = "https://v3.football.api-sports.io"
 FINISHED_STATUS = "FT"
@@ -62,6 +62,12 @@ def _has_round_number(round_name):
     """False for unnumbered rounds such as "Play Offs"."""
     parts = round_name.rsplit(" - ", 1)
     return len(parts) == 2 and parts[1].isdigit()
+
+
+def _in_league_group(league_id, round_name):
+    """False for rounds of another group sharing the league's id, e.g. "North - 7" when tracking South."""
+    group = league_round_group(league_id)
+    return group is None or round_name.rsplit(" - ", 1)[0] == group
 
 
 def get_current_round(league_id, season):
@@ -126,6 +132,7 @@ def get_round_fixtures(league_id, round_number, season=None):
         }
         for item in fixtures
         if _has_round_number(item["league"]["round"])
+        and _in_league_group(league_id, item["league"]["round"])
         and _round_number(item["league"]["round"]) == round_number
     ]
     round_fixtures.sort(key=lambda f: f["timestamp"])
@@ -155,7 +162,11 @@ def get_finished_league_matches(league_id, season=None, bookmaker_id=ONE_X_BET_B
 
     matches = []
     for item in fixtures:
-        if not _has_round_number(item["league"]["round"]) or _round_number(item["league"]["round"]) > current_round:
+        if (
+            not _has_round_number(item["league"]["round"])
+            or not _in_league_group(league_id, item["league"]["round"])
+            or _round_number(item["league"]["round"]) > current_round
+        ):
             continue
         fixture_id = item["fixture"]["id"]
         home, away = item["teams"]["home"], item["teams"]["away"]
