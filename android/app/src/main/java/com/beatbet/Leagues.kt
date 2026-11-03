@@ -37,6 +37,7 @@ val LEAGUE_NAMES = mapOf(
     172 to "Bulgaria efbet League",
     173 to "Bulgaria Vtora Liga",
     179 to "Scotland Premiership",
+    186 to "Algeria Ligue 1",
     197 to "Greece Super League",
     203 to "Turkey Super Lig",
     204 to "Turkey 1. Lig",

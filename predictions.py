@@ -21,17 +21,19 @@ def is_safe(odds):
     return favourite_odds(odds) <= SAFE_FAVOURITE_ODDS
 
 
-def make_prediction(split, matches, odds, pattern_percentage, home, away):
+def make_prediction(split, matches, odds, pattern_percentage, home, away, min_side=None):
     """Prediction for a round's last match, or None if the round already fits the pattern.
 
     split is (fav wins, fav not wins) of the round's other matches. The pick is the side
     the round is short of: "fav wins" when fav wins are short, otherwise "fav does not win".
     Besides the pick, the result holds every number the confidence is calculated from.
+    min_side picks another pattern than the league's default; pattern_percentage must be that pattern's.
     """
-    if is_positive(split, matches):
+    if min_side is None:
+        min_side = MIN_SIDE_BY_MATCHES[matches]
+    if is_positive(split, matches, min_side):
         return None
     wins, not_wins = split
-    min_side = MIN_SIDE_BY_MATCHES[matches]
     pick_fav_wins = wins < not_wins
     missing = min_side - min(wins, not_wins)
 

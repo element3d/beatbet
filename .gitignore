@@ -2,3 +2,10 @@
 __pycache__/
 private.key
 posted.json
+
+# Web dashboard
+web/beatbet.db*
+web/backend/.venv/
+web/frontend/node_modules/
+web/frontend/dist/
+web/frontend/tsconfig.tsbuildinfo

@@ -70,6 +70,29 @@ def _in_league_group(league_id, round_name):
     return group is None or round_name.rsplit(" - ", 1)[0] == group
 
 
+def tracked_round_number(league_id, round_name):
+    """Round number of a numbered round in the league's tracked group, otherwise None."""
+    if not _has_round_number(round_name) or not _in_league_group(league_id, round_name):
+        return None
+    return _round_number(round_name)
+
+
+def get_season_fixture_items(league_id, season=None, date_from=None, date_to=None):
+    """Raw API items of the league's season fixtures (current season by default),
+    optionally only those between two UTC dates ("YYYY-MM-DD", inclusive)."""
+    params = {"league": league_id, "season": season or league_season(league_id)}
+    if date_from:
+        params["from"] = date_from
+    if date_to:
+        params["to"] = date_to
+    return _get("fixtures", **params)["response"]
+
+
+def get_fixture_items_on_date(date):
+    """Raw API items of every fixture worldwide on a UTC date ("YYYY-MM-DD"), in one request."""
+    return _get("fixtures", date=date)["response"]
+
+
 def get_current_round(league_id, season):
     current = _get("fixtures/rounds", league=league_id, season=season, current="true")["response"]
     if not current:
